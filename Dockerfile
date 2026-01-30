@@ -56,8 +56,12 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
 # Set permissions
 RUN chmod -R 775 storage bootstrap/cache
 
+# Create start script
+RUN echo '#!/bin/bash\nphp artisan migrate --force\nphp artisan db:seed --force\nphp -S 0.0.0.0:${PORT:-8080} -t public' > /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose port
 EXPOSE 8080
 
-# Start command
-CMD php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# Start command using PHP built-in server directly
+CMD ["/bin/bash", "/app/start.sh"]
