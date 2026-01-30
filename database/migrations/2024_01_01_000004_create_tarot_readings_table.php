@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('tarot_readings', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('spread_type'); // single, three_card, celtic_cross
+            $table->text('question')->nullable();
+            $table->json('cards'); // Array of card objects
+            $table->text('interpretation')->nullable();
+            $table->timestamps();
+
+            $table->index('user_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('tarot_readings');
+    }
+};
