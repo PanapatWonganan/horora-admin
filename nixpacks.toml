@@ -1,10 +1,11 @@
 [phases.setup]
-nixPkgs = ["php83", "php83Extensions.pdo_mysql", "php83Extensions.mbstring", "php83Extensions.xml", "php83Extensions.curl", "php83Extensions.openssl", "php83Extensions.tokenizer", "php83Extensions.fileinfo", "php83Extensions.gd", "nodejs_20"]
+nixPkgs = ["php83", "php83Packages.composer", "nodejs_20", "npm"]
+aptPkgs = ["libpng-dev", "libjpeg-dev", "libfreetype6-dev"]
 
 [phases.install]
 cmds = [
-    "composer install --no-dev --optimize-autoloader",
-    "npm install"
+    "composer install --no-dev --optimize-autoloader --no-interaction",
+    "npm ci"
 ]
 
 [phases.build]
@@ -16,4 +17,7 @@ cmds = [
 ]
 
 [start]
-cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = "php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+
+[variables]
+PHP_VERSION = "8.3"
