@@ -6,6 +6,9 @@ if [ "${DB_CONNECTION}" = "sqlite" ] || [ -z "${DB_CONNECTION}" ]; then
     touch database/database.sqlite 2>/dev/null || true
 fi
 
+# Publish Filament assets
+php artisan filament:assets || true
+
 # Cache config for performance
 php artisan config:cache || true
 php artisan view:cache || true

@@ -54,6 +54,10 @@ RUN composer dump-autoload --optimize
 # Build assets
 RUN npm run build
 
+# Publish Filament assets
+RUN php artisan filament:assets || true
+RUN php artisan vendor:publish --tag=laravel-assets --ansi --force || true
+
 # Create storage directories
 RUN mkdir -p storage/framework/{sessions,views,cache} \
     && mkdir -p storage/logs \
