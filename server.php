@@ -32,7 +32,9 @@ if ($uri !== '/' && file_exists(__DIR__.'/public'.$uri)) {
         header('Content-Type: ' . $mimeTypes[$ext]);
     }
 
-    return false; // Let PHP built-in server handle static file
+    // Read and output the file directly
+    readfile(__DIR__.'/public'.$uri);
+    return true;
 }
 
 // Otherwise, route through Laravel
