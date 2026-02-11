@@ -20,4 +20,4 @@ echo "Creating storage link..."
 php artisan storage:link || true
 
 echo "Starting PHP server on port ${PORT:-8080}..."
-php -S 0.0.0.0:${PORT:-8080} -t public
+php -S 0.0.0.0:${PORT:-8080} server.php
