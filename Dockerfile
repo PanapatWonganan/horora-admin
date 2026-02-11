@@ -42,6 +42,12 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
+# Copy .env.example as default .env (will be overridden by Railway env vars)
+RUN cp .env.example .env || true
+
+# Generate app key if not set
+RUN php artisan key:generate --force || true
+
 # Run composer scripts
 RUN composer dump-autoload --optimize
 
