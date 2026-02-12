@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Affiliate;
+use App\Models\AffiliateCommission;
 use App\Models\MeritLocation;
 use App\Models\MeritOrder;
 use App\Models\MeritPackage;
@@ -49,9 +51,25 @@ class MeritController extends Controller
             'prayer_birthdate' => 'nullable|date',
             'prayer_wish' => 'nullable|string',
             'prayer_phone' => 'nullable|string|max:20',
+            'referral_code' => 'nullable|string|max:20',
         ]);
 
         $package = MeritPackage::findOrFail($validated['package_id']);
+
+        // Resolve affiliate from referral code
+        $affiliateId = null;
+        $referralCode = $validated['referral_code'] ?? null;
+        if ($referralCode) {
+            $affiliate = Affiliate::where('referral_code', $referralCode)
+                ->active()
+                ->first();
+            // Prevent self-referral
+            if ($affiliate && $affiliate->user_id !== $request->user()->id) {
+                $affiliateId = $affiliate->id;
+            } else {
+                $referralCode = null; // Clear invalid code
+            }
+        }
 
         $order = MeritOrder::create([
             'id' => Str::uuid(),
@@ -65,7 +83,14 @@ class MeritController extends Controller
             'prayer_phone' => $validated['prayer_phone'] ?? null,
             'price' => $package->price,
             'status' => 'pending',
+            'referral_code' => $referralCode,
+            'affiliate_id' => $affiliateId,
         ]);
+
+        // Create pending commission if affiliate exists
+        if ($affiliateId) {
+            $this->createAffiliateCommission($order, $affiliate);
+        }
 
         return response()->json($order->load(['location', 'package']), 201);
     }
@@ -168,6 +193,42 @@ class MeritController extends Controller
         ]);
 
         return response()->json($order->load(['location', 'package']), 201);
+    }
+
+    /**
+     * Create affiliate commission for an order
+     */
+    private function createAffiliateCommission(MeritOrder $order, Affiliate $affiliate): void
+    {
+        $rate = $affiliate->getCommissionRate($order->package_id);
+        $commissionAmount = round($order->price * ($rate / 100), 2);
+
+        AffiliateCommission::create([
+            'affiliate_id' => $affiliate->id,
+            'order_id' => $order->id,
+            'order_amount' => $order->price,
+            'commission_rate' => $rate,
+            'commission_amount' => $commissionAmount,
+            'status' => 'pending', // Will be approved when order is completed
+            'available_at' => null, // Set when order completes + 7 days
+        ]);
+
+        // Update affiliate stats
+        $affiliate->increment('total_orders');
+
+        // Update monthly tracking
+        $currentPeriod = now()->format('Y-m');
+        if ($affiliate->monthly_period !== $currentPeriod) {
+            $affiliate->update([
+                'monthly_orders' => 1,
+                'monthly_period' => $currentPeriod,
+            ]);
+        } else {
+            $affiliate->increment('monthly_orders');
+        }
+
+        // Update tier
+        $affiliate->updateTier();
     }
 
     /**

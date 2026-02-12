@@ -27,6 +27,8 @@ class MeritOrder extends Model
         'proof_video_url',
         'completed_at',
         'admin_note',
+        'referral_code',
+        'affiliate_id',
     ];
 
     protected function casts(): array
@@ -63,6 +65,11 @@ class MeritOrder extends Model
     public function package(): BelongsTo
     {
         return $this->belongsTo(MeritPackage::class, 'package_id');
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
     }
 
     // Status helpers
