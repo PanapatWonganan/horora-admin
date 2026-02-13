@@ -131,14 +131,15 @@ class AffiliateController extends Controller
             return response()->json(['message' => 'คุณยังไม่ได้เป็นตัวแทน'], 404);
         }
 
-        $baseUrl = 'https://horora.app';
+        $baseUrl = config('app.url', 'https://horora-admin-production.up.railway.app');
         $referralCode = $affiliate->referral_code;
+        $deepLink = "horora://merit?ref={$referralCode}";
 
         return response()->json([
             'referral_code' => $referralCode,
-            'referral_link' => "{$baseUrl}/merit?ref={$referralCode}",
-            'deep_link' => "horora://merit?ref={$referralCode}",
-            'qr_data' => "{$baseUrl}/merit?ref={$referralCode}",
+            'referral_link' => $deepLink,
+            'deep_link' => $deepLink,
+            'qr_data' => $deepLink,
             'tier' => $affiliate->tier,
         ]);
     }
